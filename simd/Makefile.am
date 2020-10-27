@@ -71,6 +71,25 @@ libsimd_la_SOURCES = jsimd_mips.c jsimd_mips_dspr2_asm.h jsimd_mips_dspr2.S
 
 endif
 
+if SIMD_LOONGSON_MMI
+
+noinst_LTLIBRARIES += libsimd_mmi.la
+
+libsimd_mmi_la_SOURCES = jccolor-mmi.c jcgray-mmi.c jcsample-mmi.c jdcolor-mmi.c \
+                         jdmerge-mmi.c jdsample-mmi.c jfdctfst-mmi.c jfdctint-mmi.c \
+                         jidctfst-mmi.c jidctint-mmi.c jquanti-mmi.c
+libsimd_mmi_la_CFLAGS = -march=loongson3a
+
+jccolor-mmi.lo: jccolext-mmi.c
+jdcolor-mmi.lo: jdcolext-mmi.c
+jcgray-mmi.lo: jcgryext-mmi.c
+jdmerge-mmi.lo: jdmrgext-mmi.c
+
+libsimd_la_SOURCES = jsimd_mips64.c jsimd.h
+libsimd_la_LIBADD = libsimd_mmi.la
+
+endif
+
 if SIMD_POWERPC
 
 noinst_LTLIBRARIES += libsimd_altivec.la
