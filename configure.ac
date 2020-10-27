@@ -500,6 +500,46 @@ if test "x${with_simd}" != "xno"; then
         fi
       fi
       ;;
+    mips64*)
+      simd_arch=mips64
+      AC_MSG_RESULT([yes (mips64)])
+      AC_MSG_CHECKING([if the compiler supports LOONGSON MMI])
+      AC_CHECK_COMPATIBLE_LOONGSON_MMI_ASSEMBLER_IFELSE(
+        [AC_MSG_RESULT([yes])
+         support_loongson_mmi=yes],
+        [AC_MSG_RESULT([no])
+         support_loongson_mmi=no])
+      if test "x${support_loongson_mmi}" = "xno"; then
+        if test "x${require_simd}" = "xyes"; then
+          AC_MSG_ERROR([SIMD LOONGSON MMI support can't be enabled.])
+        else
+          AC_MSG_WARN([SIMD LOONGSON MMI support can't be enabled.  Performance will suffer.])
+        fi
+      fi
+      AC_MSG_CHECKING([if the compiler supports MIPS MSA])
+      AC_CHECK_COMPATIBLE_MIPS_MSA_ASSEMBLER_IFELSE(
+        [AC_MSG_RESULT([yes])
+         support_mips_msa=yes],
+        [AC_MSG_RESULT([no])
+         support_mips_msa=no])
+      if test "x${support_mips_msa}" = "xno"; then
+        if test "x${require_simd}" = "xyes"; then
+          AC_MSG_ERROR([SIMD MIPS MSA support can't be enabled.])
+        else
+          AC_MSG_WARN([SIMD MIPS MSA support can't be enabled.  Performance will suffer.])
+        fi
+      fi
+      if test "x${support_loongson_mmi}" = "xno" && test "x${support_mips_msa}" = "xno"; then
+        with_simd=no
+      else
+        if test "x${support_loongson_mmi}" = "xyes"; then
+          CFLAGS="$CFLAGS -DHAVE_MMI"
+        fi
+        if test "x${support_mips_msa}" = "xyes"; then
+          CFLAGS="$CFLAGS -DHAVE_MSA"
+        fi
+      fi
+      ;;
     mips*)
       AC_MSG_RESULT([yes (mips)])
       AC_MSG_CHECKING([if the assembler is GNU-compatible and can be used])
@@ -545,6 +585,9 @@ AM_CONDITIONAL([SIMD_X86_64], [test "x$simd_arch" = "xx86_64"])
 AM_CONDITIONAL([SIMD_ARM], [test "x$simd_arch" = "xarm"])
 AM_CONDITIONAL([SIMD_ARM_64], [test "x$simd_arch" = "xaarch64"])
 AM_CONDITIONAL([SIMD_MIPS], [test "x$simd_arch" = "xmips"])
+AM_CONDITIONAL([SIMD_MIPS_64], [test "x$simd_arch" = "xmips64"])
+AM_CONDITIONAL([SIMD_LOONGSON_MMI], [test "x$support_loongson_mmi" = "xyes"])
+AM_CONDITIONAL([SIMD_MIPS_MSA], [test "x$support_mips_msa" = "xyes"])
 AM_CONDITIONAL([SIMD_POWERPC], [test "x$simd_arch" = "xpowerpc"])
 AM_CONDITIONAL([X86_64], [test "x$host_cpu" = "xx86_64" -o "x$host_cpu" = "xamd64"])
 AM_CONDITIONAL([WITH_TURBOJPEG], [test "x$with_turbojpeg" != "xno"])

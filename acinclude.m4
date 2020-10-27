@@ -214,6 +214,62 @@ AC_DEFUN([AC_CHECK_COMPATIBLE_MIPS_ASSEMBLER_IFELSE],[
   fi
 ])
 
+# AC_CHECK_COMPATIBLE_LOONGSON_MMI_ASSEMBLER_IFELSE
+# --------------------------
+# Test whether the assembler is suitable and supports LOONGSON MMI instructions
+AC_DEFUN([AC_CHECK_COMPATIBLE_LOONGSON_MMI_ASSEMBLER_IFELSE],[
+  have_loongson_mmi=no
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS="$CCASFLAGS -march=loongson3a"
+
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+
+  int main ()
+  {
+    int c = 0, a = 0, b = 0;
+    __asm__ __volatile__ (
+    "paddb %0, %1, %2 \n\t"
+      : "=f" (c)
+      : "f" (a), "f" (b)
+    );
+    return c;
+  }
+  ]])], have_loongson_mmi=yes)
+  CFLAGS=$ac_save_CFLAGS
+
+  if test "x$have_loongson_mmi" = "xyes" ; then
+    $1
+  else
+    $2
+  fi
+])
+
+# AC_CHECK_COMPATIBLE_MIPS_MSA_ASSEMBLER_IFELSE
+# --------------------------
+# Test whether the assembler is suitable and supports MIPS MSA instructions
+AC_DEFUN([AC_CHECK_COMPATIBLE_MIPS_MSA_ASSEMBLER_IFELSE],[
+  have_mips_msa=no
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS="$CCASFLAGS -mmsa -flax-vector-conversions"
+
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+  #include <msa.h>
+  int main ()
+  {
+    v4i32 a = { 0 };
+    a = __msa_addv_w(a, a);
+    return 0;
+  }
+  ]])], have_mips_msa=yes)
+  CFLAGS=$ac_save_CFLAGS
+
+  if test "x$have_mips_msa" = "xyes" ; then
+    $1
+  else
+    $2
+  fi
+])
+
 AC_DEFUN([AC_CHECK_COMPATIBLE_ARM64_ASSEMBLER_IFELSE],[
   ac_good_gnu_arm_assembler=no
   ac_save_CC="$CC"
