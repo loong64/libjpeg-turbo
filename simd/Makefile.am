@@ -71,6 +71,10 @@ libsimd_la_SOURCES = jsimd_mips.c jsimd_mips_dspr2_asm.h jsimd_mips_dspr2.S
 
 endif
 
+if SIMD_MIPS_64
+
+libsimd_la_LIBADD =
+
 if SIMD_LOONGSON_MMI
 
 noinst_LTLIBRARIES += libsimd_mmi.la
@@ -85,8 +89,30 @@ jdcolor-mmi.lo: jdcolext-mmi.c
 jcgray-mmi.lo: jcgryext-mmi.c
 jdmerge-mmi.lo: jdmrgext-mmi.c
 
+libsimd_la_LIBADD += libsimd_mmi.la
+
+endif
+
+if SIMD_MIPS_MSA
+
+noinst_LTLIBRARIES += libsimd_msa.la
+
+libsimd_msa_la_SOURCES = jccolor_msa.c jcgray_msa.c jcsample_msa.c jdcolor_msa.c \
+                         jdmerge_msa.c jdsample_msa.c jfdctfst_msa.c jfdctint_msa.c \
+                         jidctfst_msa.c jidctint_msa.c jquanti_msa.c jidctred_msa.c \
+                         jdcol565_msa.c jmacros_msa.h
+libsimd_msa_la_CFLAGS = -mmsa -flax-vector-conversions
+
+jccolor_msa.lo: jccolext_msa.c
+jdcolor_msa.lo: jdcolext_msa.c
+jcgray_msa.lo: jcgryext_msa.c
+jdmerge_msa.lo: jdmrgext_msa.c
+
+libsimd_la_LIBADD += libsimd_msa.la
+
+endif
+
 libsimd_la_SOURCES = jsimd_mips64.c jsimd.h
-libsimd_la_LIBADD = libsimd_mmi.la
 
 endif
 
