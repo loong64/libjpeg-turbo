@@ -167,11 +167,6 @@ jsimd_can_ycc_rgb(void)
     return 1;
 #endif
 
-#if defined(HAVE_MMI)
-  if (simd_support & JSIMD_MMI)
-    return 1;
-#endif
-
   return 0;
 }
 
@@ -379,85 +374,54 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
                       JDIMENSION input_row, JSAMPARRAY output_buf,
                       int num_rows)
 {
-#if defined(HAVE_MMI)
-  void (*mmifct) (JDIMENSION, JSAMPIMAGE, JDIMENSION, JSAMPARRAY, int);
-#endif
 #if defined(HAVE_MSA)
   void (*msafct) (JDIMENSION, JSAMPIMAGE, JDIMENSION, JSAMPARRAY, int);
 #endif
 
   switch (cinfo->out_color_space) {
   case JCS_EXT_RGB:
-#if defined(HAVE_MMI)
-    mmifct = jsimd_ycc_extrgb_convert_mmi;
-#endif
 #if defined(HAVE_MSA)
     msafct = jsimd_ycc_extrgb_convert_msa;
 #endif
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
-#if defined(HAVE_MMI)
-    mmifct = jsimd_ycc_extrgbx_convert_mmi;
-#endif
 #if defined(HAVE_MSA)
     msafct = jsimd_ycc_extrgbx_convert_msa;
 #endif
     break;
   case JCS_EXT_BGR:
-#if defined(HAVE_MMI)
-    mmifct = jsimd_ycc_extbgr_convert_mmi;
-#endif
 #if defined(HAVE_MSA)
     msafct = jsimd_ycc_extbgr_convert_msa;
 #endif
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
-#if defined(HAVE_MMI)
-    mmifct = jsimd_ycc_extbgrx_convert_mmi;
-#endif
 #if defined(HAVE_MSA)
     msafct = jsimd_ycc_extbgrx_convert_msa;
 #endif
     break;
   case JCS_EXT_XBGR:
   case JCS_EXT_ABGR:
-#if defined(HAVE_MMI)
-    mmifct = jsimd_ycc_extxbgr_convert_mmi;
-#endif
 #if defined(HAVE_MSA)
     msafct = jsimd_ycc_extxbgr_convert_msa;
 #endif
     break;
   case JCS_EXT_XRGB:
   case JCS_EXT_ARGB:
-#if defined(HAVE_MMI)
-    mmifct = jsimd_ycc_extxrgb_convert_mmi;
-#endif
 #if defined(HAVE_MSA)
     msafct = jsimd_ycc_extxrgb_convert_msa;
 #endif
     break;
   default:
-#if defined(HAVE_MMI)
-    mmifct = jsimd_ycc_rgb_convert_mmi;
-#endif
 #if defined(HAVE_MSA)
     msafct = jsimd_ycc_extrgb_convert_msa;
 #endif
     break;
   }
 
-#if defined(HAVE_MSA) && defined(HAVE_MMI)
-  if (simd_support & JSIMD_MSA)
-    msafct(cinfo->output_width, input_buf, input_row, output_buf, num_rows);
-  else
-    mmifct(cinfo->output_width, input_buf, input_row, output_buf, num_rows);
-#elif defined(HAVE_MSA)
+#if defined(HAVE_MSA)
   msafct(cinfo->output_width, input_buf, input_row, output_buf, num_rows);
-#else
-  mmifct(cinfo->output_width, input_buf, input_row, output_buf, num_rows);
 #endif
 }
 
