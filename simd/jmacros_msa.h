@@ -27,6 +27,15 @@
 #include <stdint.h>
 #include <msa.h>
 
+/*
+ *TODO:It's a workround. Will be recovered
+ *when gcc and clang follow the same rule.
+ */
+#ifdef CLANG_BUILD
+#define MSA_MADDV_W(a, b, c) __msa_maddv_w(a, b, c)
+#else //gcc
+#define MSA_MADDV_W(a, b, c) __msa_maddv_w(b, c, a)
+#endif
 
 #ifdef CLANG_BUILD
 #define MSA_ADDVI_B(a, b)  __msa_addvi_b((v16i8)a, b)

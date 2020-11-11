@@ -177,8 +177,8 @@ jsimd_idct_islow_msa(j_decompress_ptr cinfo, jpeg_component_info *compptr,
     /* tmp0 += z1 + z3 */
     tmp1 = __msa_splati_w(const2, 0);
     ADD2(z1_r, z3_r, z1_l, z3_l, tmp0_r, tmp0_l);
-    tmp0_r = __msa_maddv_w(tmp0_r, d7_r, tmp1);
-    tmp0_l = __msa_maddv_w(tmp0_l, d7_l, tmp1);
+    tmp0_r = MSA_MADDV_W(tmp0_r, d7_r, tmp1);
+    tmp0_l = MSA_MADDV_W(tmp0_l, d7_l, tmp1);
 
     /* dataptr[3] = DESCALE(tmp13 + tmp0, CONST_BITS-PASS1_BITS) */
     ADD2(tmp13_r, tmp0_r, tmp13_l, tmp0_l, dst3_r, dst3_l);
@@ -192,8 +192,8 @@ jsimd_idct_islow_msa(j_decompress_ptr cinfo, jpeg_component_info *compptr,
     /* tmp1 += z2 + z4 */
     tmp1 = __msa_splati_w(const2, 1);
     ADD2(z2_r, z4_r, z2_l, z4_l, tmp1_r, tmp1_l);
-    tmp1_r = __msa_maddv_w(tmp1_r, d5_r, tmp1);
-    tmp1_l = __msa_maddv_w(tmp1_l, d5_l, tmp1);
+    tmp1_r = MSA_MADDV_W(tmp1_r, d5_r, tmp1);
+    tmp1_l = MSA_MADDV_W(tmp1_l, d5_l, tmp1);
 
     /* dataptr[2] = DESCALE(tmp12 + tmp1, CONST_BITS-PASS1_BITS) */
     ADD2(tmp12_r, tmp1_r, tmp12_l, tmp1_l, dst2_r, dst2_l);
@@ -207,8 +207,8 @@ jsimd_idct_islow_msa(j_decompress_ptr cinfo, jpeg_component_info *compptr,
     /* tmp2 += z2 + z3 */
     tmp1 = __msa_splati_w(const2, 2);
     ADD2(z2_r, z3_r, z2_l, z3_l, tmp2_r, tmp2_l);
-    tmp2_r = __msa_maddv_w(tmp2_r, d3_r, tmp1);
-    tmp2_l = __msa_maddv_w(tmp2_l, d3_l, tmp1);
+    tmp2_r = MSA_MADDV_W(tmp2_r, d3_r, tmp1);
+    tmp2_l = MSA_MADDV_W(tmp2_l, d3_l, tmp1);
 
     /* dataptr[1] = DESCALE(tmp11 + tmp2, CONST_BITS-PASS1_BITS) */
     ADD2(tmp11_r, tmp2_r, tmp11_l, tmp2_l, dst1_r, dst1_l)
@@ -222,8 +222,8 @@ jsimd_idct_islow_msa(j_decompress_ptr cinfo, jpeg_component_info *compptr,
     /* tmp3 += z1 + z4 */
     tmp1 = __msa_splati_w(const2, 3);
     ADD2(z1_r, z4_r, z1_l, z4_l, tmp3_r, tmp3_l);
-    tmp3_r = __msa_maddv_w(tmp3_r, d1_r, tmp1);
-    tmp3_l = __msa_maddv_w(tmp3_l, d1_l, tmp1);
+    tmp3_r = MSA_MADDV_W(tmp3_r, d1_r, tmp1);
+    tmp3_l = MSA_MADDV_W(tmp3_l, d1_l, tmp1);
 
     /* dataptr[0] = DESCALE(tmp10 + tmp3, CONST_BITS-PASS1_BITS) */
     ADD2(tmp10_r, tmp3_r, tmp10_l, tmp3_l, dst0_r, dst0_l);
@@ -285,8 +285,8 @@ jsimd_idct_islow_msa(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   /* tmp0 += z1 + z3 */
   tmp = __msa_shf_w(const2, 0);
   ADD2(z1_r, z3_r, z1_l, z3_l, tmp0_r, tmp0_l);
-  tmp0_r = __msa_maddv_w(tmp0_r, d7_r, tmp);
-  tmp0_l = __msa_maddv_w(tmp0_l, d7_l, tmp);
+  tmp0_r = MSA_MADDV_W(tmp0_r, d7_r, tmp);
+  tmp0_l = MSA_MADDV_W(tmp0_l, d7_l, tmp);
 
   /* dataptr[3] = DESCALE(tmp13 + tmp0, CONST_BITS+PASS1_BITS+3) */
   ADD2(tmp13_r, tmp0_r, tmp13_l, tmp0_l, dst3_r, dst3_l);
@@ -306,8 +306,8 @@ jsimd_idct_islow_msa(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   /* tmp1 += z2 + z4 */
   tmp = __msa_shf_w(const2, 0x55);
   ADD2(z2_r, z4_r, z2_l, z4_l, tmp1_r, tmp1_l);
-  tmp1_r = __msa_maddv_w(tmp1_r, d5_r, tmp);
-  tmp1_l = __msa_maddv_w(tmp1_l, d5_l, tmp);
+  tmp1_r = MSA_MADDV_W(tmp1_r, d5_r, tmp);
+  tmp1_l = MSA_MADDV_W(tmp1_l, d5_l, tmp);
 
   /* dataptr[2] = DESCALE(tmp12 + tmp1, CONST_BITS+PASS1_BITS+3) */
   ADD2(tmp12_r, tmp1_r, tmp12_l, tmp1_l, dst2_r, dst2_l);
@@ -327,8 +327,8 @@ jsimd_idct_islow_msa(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   /* tmp2 += z2 + z3 */
   tmp = __msa_shf_w(const2, 0xAA);
   ADD2(z2_r, z3_r, z2_l, z3_l, tmp2_r, tmp2_l);
-  tmp2_r = __msa_maddv_w(tmp2_r, d3_r, tmp);
-  tmp2_l = __msa_maddv_w(tmp2_l, d3_l, tmp);
+  tmp2_r = MSA_MADDV_W(tmp2_r, d3_r, tmp);
+  tmp2_l = MSA_MADDV_W(tmp2_l, d3_l, tmp);
 
   /* dataptr[1] = DESCALE(tmp11 + tmp2, CONST_BITS+PASS1_BITS+3) */
   ADD2(tmp11_r, tmp2_r, tmp11_l, tmp2_l, dst1_r, dst1_l);
@@ -348,8 +348,8 @@ jsimd_idct_islow_msa(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   /* tmp3 += z1 + z4 */
   tmp = __msa_shf_w(const2, 0xFF);
   ADD2(z1_r, z4_r, z1_l, z4_l, tmp3_r, tmp3_l);
-  tmp3_r = __msa_maddv_w(tmp3_r, d1_r, tmp);
-  tmp3_l = __msa_maddv_w(tmp3_l, d1_l, tmp);
+  tmp3_r = MSA_MADDV_W(tmp3_r, d1_r, tmp);
+  tmp3_l = MSA_MADDV_W(tmp3_l, d1_l, tmp);
 
   /* dataptr[0] = DESCALE(tmp10 + tmp3, CONST_BITS+PASS1_BITS+3) */
   ADD2(tmp10_r, tmp3_r, tmp10_l, tmp3_l, dst0_r, dst0_l);

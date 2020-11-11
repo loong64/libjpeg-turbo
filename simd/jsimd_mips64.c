@@ -1237,15 +1237,10 @@ jsimd_can_idct_islow(void)
   if (sizeof(ISLOW_MULT_TYPE) != 2)
     return 0;
 
-/*TODO:
- *MSA version will result in make test failure,
- *will fix it in the future.
- */
-/*
 #if defined(HAVE_MSA)
   if (simd_support & JSIMD_MSA)
     return 1;
-#endif*/
+#endif
 
 #if defined(HAVE_MMI)
   if (simd_support & JSIMD_MMI)
@@ -1298,11 +1293,8 @@ jsimd_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
-  /*TODO:
-   *MSA version will result in make test failure,
-   *will fix it in the future.
-   */
-  /*unsigned char *output[8] = {
+#if defined(HAVE_MSA)
+  unsigned char *output[8] = {
     output_buf[0] + output_col,
     output_buf[1] + output_col,
     output_buf[2] + output_col,
@@ -1312,12 +1304,17 @@ jsimd_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
     output_buf[6] + output_col,
     output_buf[7] + output_col,
   };
+#endif
 
+#if defined(HAVE_MSA) && defined(HAVE_MMI)
   if (simd_support & JSIMD_MSA)
     jsimd_idct_islow_msa(cinfo, compptr, coef_block, output, output_col);
-  else*/
-#if defined(HAVE_MMI)
+  else
     jsimd_idct_islow_mmi(compptr->dct_table, coef_block, output_buf, output_col);
+#elif defined(HAVE_MSA)
+  jsimd_idct_islow_msa(cinfo, compptr, coef_block, output, output_col);
+#else
+  jsimd_idct_islow_mmi(compptr->dct_table, coef_block, output_buf, output_col);
 #endif
 }
 
