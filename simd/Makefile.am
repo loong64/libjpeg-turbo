@@ -138,6 +138,32 @@ libsimd_la_LIBADD = libsimd_altivec.la
 
 endif
 
+if SIMD_LOONGARCH_64
+
+libsimd_la_LIBADD =
+
+if SIMD_LOONGARCH_LASX
+
+noinst_LTLIBRARIES += libsimd_lasx.la
+
+libsimd_lasx_la_SOURCES = jidctint-lasx.c jdcolor-lasx.c jdsample-lasx.c \
+        jfdctint-lasx.c jquanti-lasx.c jfdctfst-lasx.c jcgray-lasx.c \
+        jccolor-lasx.c jcsample-lasx.c
+
+jdcolor-lasx.lo: jdcolext-lasx.c
+jcgray-lasx.lo: jcgrayext-lasx.c
+jccolor-lasx.lo: jccolext-lasx.c
+
+libsimd_lasx_la_CFLAGS = -mlasx
+
+libsimd_la_LIBADD += libsimd_lasx.la
+
+endif
+
+libsimd_la_SOURCES = jsimd_loongarch64.c jsimd.h
+
+endif
+
 AM_CPPFLAGS = -I$(top_srcdir)
 
 .asm.lo:

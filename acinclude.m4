@@ -308,3 +308,29 @@ AC_DEFUN([AC_CHECK_COMPATIBLE_ARM64_ASSEMBLER_IFELSE],[
     $2
   fi
 ])
+
+# AC_CHECK_COMPATIBLE_LOONGARCH_LASX_ASSEMBLER_IFELSE
+# --------------------------
+# Test whether the assembler is suitable and supports LOONGARCH LASX instructions
+AC_DEFUN([AC_CHECK_COMPATIBLE_LOONGARCH_LASX_ASSEMBLER_IFELSE],[
+  support_loongarch_lasx=no
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS="$CCASFLAGS -mlasx"
+
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+  #include <lasxintrin.h>
+  int main ()
+  {
+    __m256i a,b,c;
+    a = __lasx_xvadd_w(b, c);
+    return 0;
+  }
+  ]])], support_loongarch_lasx=yes)
+  CFLAGS=$ac_save_CFLAGS
+
+  if test "x$support_loongarch_lasx" = "xyes" ; then
+    $1
+  else
+    $2
+  fi
+])
