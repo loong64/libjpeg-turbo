@@ -148,11 +148,12 @@ noinst_LTLIBRARIES += libsimd_lasx.la
 
 libsimd_lasx_la_SOURCES = jidctint-lasx.c jdcolor-lasx.c jdsample-lasx.c \
         jfdctint-lasx.c jquanti-lasx.c jfdctfst-lasx.c jcgray-lasx.c \
-        jccolor-lasx.c jcsample-lasx.c
+        jccolor-lasx.c jcsample-lasx.c jdmerge-lasx.c
 
 jdcolor-lasx.lo: jdcolext-lasx.c
 jcgray-lasx.lo: jcgrayext-lasx.c
 jccolor-lasx.lo: jccolext-lasx.c
+jdmerge-lasx.lo: jdmrgext-lasx.c
 
 libsimd_lasx_la_CFLAGS = -mlasx
 
