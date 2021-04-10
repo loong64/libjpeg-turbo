@@ -90,4 +90,22 @@
   _in3 = __lasx_xvsrari_w(_in3, shift_value); \
 }
 
+/*
+ * 1,2,3,4,5,6,7,8     1 1 1 1 5 5 5 5
+ * 1,2,3,4,5,6,7,8 --> 2 2 2 2 6 6 6 6
+ * 1,2,3,4,5,6,7,8     3 3 3 3 7 7 7 7
+ * 1,2,3,4,5,6,7,8     4 4 4 4 8 8 8 8
+ */
+#define LASX_TRANSPOSE4x4_W_128SV(_in0, _in1, _in2, _in3, \
+                                  _out0, _out1, _out2, _out3) \
+{ \
+  __m256i _tmp0,_tmp1,_tmp2,_tmp3; \
+  LASX_ILVLH_W_128SV(_in1, _in0, _tmp1, _tmp0); \
+  LASX_ILVLH_W_128SV(_in3, _in2, _tmp3, _tmp2); \
+  LASX_PCKEV_D_128SV(_tmp2, _tmp0, _out0); \
+  LASX_PCKOD_D_128SV(_tmp2, _tmp0, _out1); \
+  LASX_PCKEV_D_128SV(_tmp3, _tmp1, _out2); \
+  LASX_PCKOD_D_128SV(_tmp3, _tmp1, _out3); \
+}
+
 #endif /* __JMACROS_LASX_H__ */

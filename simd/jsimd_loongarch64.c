@@ -722,6 +722,9 @@ jsimd_can_idct_2x2(void)
   if (sizeof(ISLOW_MULT_TYPE) != 2)
     return 0;
 
+  if (simd_support & JSIMD_LASX)
+    return 1;
+
   return 0;
 }
 
@@ -741,6 +744,9 @@ jsimd_can_idct_4x4(void)
     return 0;
   if (sizeof(ISLOW_MULT_TYPE) != 2)
     return 0;
+
+  if (simd_support & JSIMD_LASX)
+    return 1;
 
   return 0;
 }
@@ -762,6 +768,7 @@ jsimd_idct_2x2(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                JCOEFPTR coef_block, JSAMPARRAY output_buf,
                JDIMENSION output_col)
 {
+  jsimd_idct_2x2_lasx(compptr->dct_table, coef_block, output_buf, output_col);
 }
 
 GLOBAL(void)
@@ -769,6 +776,7 @@ jsimd_idct_4x4(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                JCOEFPTR coef_block, JSAMPARRAY output_buf,
                JDIMENSION output_col)
 {
+  jsimd_idct_4x4_lasx(compptr->dct_table, coef_block, output_buf, output_col);
 }
 
 GLOBAL(void)
@@ -827,6 +835,9 @@ jsimd_can_idct_ifast(void)
   if (IFAST_SCALE_BITS != 2)
     return 0;
 
+  if (simd_support & JSIMD_LASX)
+    return 1;
+
   return 0;
 }
 
@@ -862,6 +873,8 @@ jsimd_idct_ifast(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
+  jsimd_idct_ifast_lasx(compptr->dct_table, coef_block, output_buf,
+                        output_col);
 }
 
 GLOBAL(void)

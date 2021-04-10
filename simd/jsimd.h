@@ -1226,6 +1226,13 @@ EXTERN(void) jsimd_idct_4x4_msa
         (j_decompress_ptr cinfo, jpeg_component_info *compptr,
          JCOEFPTR coef_block, JSAMPARRAY output_buf, JDIMENSION output_col);
 
+EXTERN(void) jsimd_idct_2x2_lasx
+        (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
+         JDIMENSION output_col);
+EXTERN(void) jsimd_idct_4x4_lasx
+        (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
+         JDIMENSION output_col);
+
 /* Slow Integer Inverse DCT */
 EXTERN(void) jsimd_idct_islow_mmx
         (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
@@ -1290,6 +1297,10 @@ EXTERN(void) jsimd_idct_ifast_mmi
          JDIMENSION output_col);
 
 EXTERN(void) jsimd_idct_ifast_altivec
+        (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
+         JDIMENSION output_col);
+
+EXTERN(void) jsimd_idct_ifast_lasx
         (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
          JDIMENSION output_col);
 
