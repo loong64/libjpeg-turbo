@@ -563,21 +563,41 @@ if test "x${with_simd}" != "xno"; then
     loongarch64)
       simd_arch=loongarch64
       AC_MSG_RESULT([yes (loongarch64)])
+      AC_MSG_CHECKING([if the compiler supports LOONGARCH LSX])
+      AC_CHECK_COMPATIBLE_LOONGARCH_LSX_ASSEMBLER_IFELSE(
+        [AC_MSG_RESULT([yes])
+         support_loongarch_lsx=yes],
+        [AC_MSG_RESULT([no])
+         support_loongarch_lsx=no])
+      if test "x${support_loongarch_lsx}" = "xno"; then
+        if test "x${require_simd}" = "xyes"; then
+          AC_MSG_ERROR([SIMD LOONGARCH LSX support can't be enabled.])
+        else
+          AC_MSG_WARN([SIMD LOONGARCH LSX support can't be enabled.  Performance will suffer.])
+        fi
+      fi
       AC_MSG_CHECKING([if the compiler supports LOONGARCH LASX])
       AC_CHECK_COMPATIBLE_LOONGARCH_LASX_ASSEMBLER_IFELSE(
         [AC_MSG_RESULT([yes])
          support_loongarch_lasx=yes],
         [AC_MSG_RESULT([no])
          support_loongarch_lasx=no])
-      if test "x${support_loongarch_lasx}" = "xyes"; then
-        CFLAGS="$CFLAGS -DHAVE_LASX"
-      else
-        with_simd=no
+      if test "x${support_loongarch_lasx}" = "xno"; then
         if test "x${require_simd}" = "xyes"; then
           AC_MSG_ERROR([SIMD LOONGARCH LASX support can't be enabled.])
         else
           AC_MSG_WARN([SIMD LOONGARCH LASX support can't be enabled.  Performance will suffer.])
         fi
+      fi
+      if test "x${support_loongarch_lsx}" = "xno" && test "x${support_loongarch_lasx}" = "xno"; then
+        with_simd=no
+      else
+	if test "x${support_loongarch_lsx}" = "xyes"; then
+          CFLAGS="$CFLAGS -DHAVE_LSX"
+	fi
+	if test "x${support_loongarch_lasx}" = "xyes"; then
+          CFLAGS="$CFLAGS -DHAVE_LASX"
+	fi
       fi
       ;;
    *)
@@ -610,6 +630,7 @@ AM_CONDITIONAL([SIMD_LOONGSON_MMI], [test "x$support_loongson_mmi" = "xyes"])
 AM_CONDITIONAL([SIMD_MIPS_MSA], [test "x$support_mips_msa" = "xyes"])
 AM_CONDITIONAL([SIMD_POWERPC], [test "x$simd_arch" = "xpowerpc"])
 AM_CONDITIONAL([SIMD_LOONGARCH_64], [test "x$simd_arch" = "xloongarch64"])
+AM_CONDITIONAL([SIMD_LOONGARCH_LSX], [test "x$support_loongarch_lsx" = "xyes"])
 AM_CONDITIONAL([SIMD_LOONGARCH_LASX], [test "x$support_loongarch_lasx" = "xyes"])
 AM_CONDITIONAL([X86_64], [test "x$host_cpu" = "xx86_64" -o "x$host_cpu" = "xamd64"])
 AM_CONDITIONAL([WITH_TURBOJPEG], [test "x$with_turbojpeg" != "xno"])

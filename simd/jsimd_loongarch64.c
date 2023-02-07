@@ -5,7 +5,7 @@
  * Copyright (C) 2009-2011, 2014, 2016, 2018, D. R. Commander.
  * Copyright (C) 2013-2014, MIPS Technologies, Inc., California.
  * Copyright (C) 2015, 2018, Matthieu Darbois.
- * Copyright (C) 2021, Loongson Technology Corporation Limited, BeiJing.
+ * Copyright (C) 2021, 2023, Loongson Technology Corporation Limited, BeiJing.
  *
  * Based on the x86 SIMD extension for IJG JPEG library,
  * Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -30,6 +30,7 @@
 #include <stdint.h>
 
 #define LOONGARCH_CFG2 0x02
+#define LOONGARCH_LSX  1<<6
 #define LOONGARCH_LASX 1<<7
 
 static unsigned int simd_support = ~0;
@@ -47,6 +48,8 @@ check_loongarch_feature(void)
     : "r"(LOONGARCH_CFG2)
   );
 
+  if (reg & LOONGARCH_LSX)
+    simd_support |= JSIMD_LSX;
   if (reg & LOONGARCH_LASX)
     simd_support |= JSIMD_LASX;
 }
@@ -70,9 +73,12 @@ init_simd(void)
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */
+  env = getenv("JSIMD_FORCELSX");
+  if ((env != NULL) && (strcmp(env, "1") == 0))
+    simd_support &= JSIMD_LSX;
   env = getenv("JSIMD_FORCELASX");
   if ((env != NULL) && (strcmp(env, "1") == 0))
-    simd_support = JSIMD_LASX;
+    simd_support &= JSIMD_LASX;
   env = getenv("JSIMD_FORCENONE");
   if ((env != NULL) && (strcmp(env, "1") == 0))
     simd_support = 0;
@@ -94,6 +100,8 @@ jsimd_can_rgb_ycc(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -113,6 +121,8 @@ jsimd_can_rgb_gray(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -131,6 +141,8 @@ jsimd_can_ycc_rgb(void)
     return 0;
 
   if (simd_support & JSIMD_LASX)
+    return 1;
+  if (simd_support & JSIMD_LSX)
     return 1;
 
   return 0;
@@ -162,36 +174,47 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
                       int num_rows)
 {
   void (*lasxfct)(JDIMENSION, JSAMPARRAY, JSAMPIMAGE, JDIMENSION, int);
+  void (*lsxfct)(JDIMENSION, JSAMPARRAY, JSAMPIMAGE, JDIMENSION, int);
 
   switch (cinfo->in_color_space) {
   case JCS_EXT_RGB:
     lasxfct = jsimd_extrgb_ycc_convert_lasx;
+    lsxfct = jsimd_extrgb_ycc_convert_lsx;
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     lasxfct = jsimd_extrgbx_ycc_convert_lasx;
+    lsxfct = jsimd_extrgbx_ycc_convert_lsx;
     break;
   case JCS_EXT_BGR:
     lasxfct = jsimd_extbgr_ycc_convert_lasx;
+    lsxfct = jsimd_extbgr_ycc_convert_lsx;
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
     lasxfct = jsimd_extbgrx_ycc_convert_lasx;
+    lsxfct = jsimd_extbgrx_ycc_convert_lsx;
     break;
   case JCS_EXT_XBGR:
   case JCS_EXT_ABGR:
     lasxfct = jsimd_extxbgr_ycc_convert_lasx;
+    lsxfct = jsimd_extxbgr_ycc_convert_lsx;
     break;
   case JCS_EXT_XRGB:
   case JCS_EXT_ARGB:
     lasxfct = jsimd_extxrgb_ycc_convert_lasx;
+    lsxfct = jsimd_extxrgb_ycc_convert_lsx;
     break;
   default:
     lasxfct = jsimd_rgb_ycc_convert_lasx;
+    lsxfct = jsimd_rgb_ycc_convert_lsx;
     break;
   }
 
-  lasxfct(cinfo->image_width, input_buf, output_buf, output_row, num_rows);
+  if (simd_support & JSIMD_LASX)
+    lasxfct(cinfo->image_width, input_buf, output_buf, output_row, num_rows);
+  else if (simd_support & JSIMD_LSX)
+    lsxfct(cinfo->image_width, input_buf, output_buf, output_row, num_rows);
 }
 
 GLOBAL(void)
@@ -200,36 +223,47 @@ jsimd_rgb_gray_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
                        int num_rows)
 {
   void (*lasxfct) (JDIMENSION, JSAMPARRAY, JSAMPIMAGE, JDIMENSION, int);
+  void (*lsxfct) (JDIMENSION, JSAMPARRAY, JSAMPIMAGE, JDIMENSION, int);
 
   switch (cinfo->in_color_space) {
   case JCS_EXT_RGB:
     lasxfct = jsimd_extrgb_gray_convert_lasx;
+    lsxfct = jsimd_extrgb_gray_convert_lsx;
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     lasxfct = jsimd_extrgbx_gray_convert_lasx;
+    lsxfct = jsimd_extrgbx_gray_convert_lsx;
     break;
   case JCS_EXT_BGR:
     lasxfct = jsimd_extbgr_gray_convert_lasx;
+    lsxfct = jsimd_extbgr_gray_convert_lsx;
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
     lasxfct = jsimd_extbgrx_gray_convert_lasx;
+    lsxfct = jsimd_extbgrx_gray_convert_lsx;
     break;
   case JCS_EXT_XBGR:
   case JCS_EXT_ABGR:
     lasxfct = jsimd_extxbgr_gray_convert_lasx;
+    lsxfct = jsimd_extxbgr_gray_convert_lsx;
     break;
   case JCS_EXT_XRGB:
   case JCS_EXT_ARGB:
     lasxfct = jsimd_extxrgb_gray_convert_lasx;
+    lsxfct = jsimd_extxrgb_gray_convert_lsx;
     break;
   default:
     lasxfct = jsimd_rgb_gray_convert_lasx;
+    lsxfct = jsimd_rgb_gray_convert_lsx;
     break;
   }
 
-  lasxfct(cinfo->image_width, input_buf, output_buf, output_row, num_rows);
+  if (simd_support & JSIMD_LASX)
+    lasxfct(cinfo->image_width, input_buf, output_buf, output_row, num_rows);
+  else if (simd_support & JSIMD_LSX)
+    lsxfct(cinfo->image_width, input_buf, output_buf, output_row, num_rows);
 }
 
 GLOBAL(void)
@@ -238,36 +272,47 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
                       int num_rows)
 {
   void (*lasxfct) (JDIMENSION, JSAMPIMAGE, JDIMENSION, JSAMPARRAY, int);
+  void (*lsxfct) (JDIMENSION, JSAMPIMAGE, JDIMENSION, JSAMPARRAY, int);
 
   switch (cinfo->out_color_space) {
   case JCS_EXT_RGB:
     lasxfct = jsimd_ycc_extrgb_convert_lasx;
+    lsxfct = jsimd_ycc_extrgb_convert_lsx;
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     lasxfct = jsimd_ycc_extrgbx_convert_lasx;
+    lsxfct = jsimd_ycc_extrgbx_convert_lsx;
     break;
   case JCS_EXT_BGR:
     lasxfct = jsimd_ycc_extbgr_convert_lasx;
+    lsxfct = jsimd_ycc_extbgr_convert_lsx;
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
     lasxfct = jsimd_ycc_extbgrx_convert_lasx;
+    lsxfct = jsimd_ycc_extbgrx_convert_lsx;
     break;
   case JCS_EXT_XBGR:
   case JCS_EXT_ABGR:
     lasxfct = jsimd_ycc_extxbgr_convert_lasx;
+    lsxfct = jsimd_ycc_extxbgr_convert_lsx;
     break;
   case JCS_EXT_XRGB:
   case JCS_EXT_ARGB:
     lasxfct = jsimd_ycc_extxrgb_convert_lasx;
+    lsxfct = jsimd_ycc_extxrgb_convert_lsx;
     break;
   default:
     lasxfct = jsimd_ycc_rgb_convert_lasx;
+    lsxfct = jsimd_ycc_rgb_convert_lsx;
     break;
   }
 
-  lasxfct(cinfo->output_width, input_buf, input_row, output_buf, num_rows);
+  if (simd_support & JSIMD_LASX)
+    lasxfct(cinfo->output_width, input_buf, input_row, output_buf, num_rows);
+  else if (simd_support & JSIMD_LSX)
+    lsxfct(cinfo->output_width, input_buf, input_row, output_buf, num_rows);
 }
 
 GLOBAL(void)
@@ -297,6 +342,8 @@ jsimd_can_h2v2_downsample(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -320,6 +367,8 @@ jsimd_can_h2v1_downsample(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -328,9 +377,14 @@ GLOBAL(void)
 jsimd_h2v2_downsample(j_compress_ptr cinfo, jpeg_component_info *compptr,
                       JSAMPARRAY input_data, JSAMPARRAY output_data)
 {
-  jsimd_h2v2_downsample_lasx(cinfo->image_width, cinfo->max_v_samp_factor,
-                             compptr->v_samp_factor, compptr->width_in_blocks,
-                             input_data, output_data);
+  if (simd_support & JSIMD_LASX)
+    jsimd_h2v2_downsample_lasx(cinfo->image_width, cinfo->max_v_samp_factor,
+                               compptr->v_samp_factor, compptr->width_in_blocks,
+                               input_data, output_data);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_h2v2_downsample_lsx(cinfo->image_width, cinfo->max_v_samp_factor,
+                              compptr->v_samp_factor, compptr->width_in_blocks,
+                              input_data, output_data);
 }
 
 GLOBAL(void)
@@ -344,9 +398,14 @@ GLOBAL(void)
 jsimd_h2v1_downsample(j_compress_ptr cinfo, jpeg_component_info *compptr,
                       JSAMPARRAY input_data, JSAMPARRAY output_data)
 {
-  jsimd_h2v1_downsample_lasx(cinfo->image_width, cinfo->max_v_samp_factor,
-                             compptr->v_samp_factor, compptr->width_in_blocks,
-                             input_data, output_data);
+  if (simd_support & JSIMD_LASX)
+    jsimd_h2v1_downsample_lasx(cinfo->image_width, cinfo->max_v_samp_factor,
+                               compptr->v_samp_factor, compptr->width_in_blocks,
+                               input_data, output_data);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_h2v1_downsample_lsx(cinfo->image_width, cinfo->max_v_samp_factor,
+                              compptr->v_samp_factor, compptr->width_in_blocks,
+                              input_data, output_data);
 }
 
 GLOBAL(int)
@@ -361,6 +420,8 @@ jsimd_can_h2v2_upsample(void)
     return 0;
 
   if (simd_support & JSIMD_LASX)
+    return 1;
+  if (simd_support & JSIMD_LSX)
     return 1;
 
   return 0;
@@ -379,6 +440,8 @@ jsimd_can_h2v1_upsample(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -393,16 +456,24 @@ GLOBAL(void)
 jsimd_h2v2_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                     JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
-  jsimd_h2v2_upsample_lasx(cinfo->max_v_samp_factor, cinfo->output_width,
-                           input_data, output_data_ptr);
+  if (simd_support & JSIMD_LASX)
+    jsimd_h2v2_upsample_lasx(cinfo->max_v_samp_factor, cinfo->output_width,
+                             input_data, output_data_ptr);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_h2v2_upsample_lsx(cinfo->max_v_samp_factor, cinfo->output_width,
+                            input_data, output_data_ptr);
 }
 
 GLOBAL(void)
 jsimd_h2v1_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                     JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
-  jsimd_h2v1_upsample_lasx(cinfo->max_v_samp_factor, cinfo->output_width,
-                           input_data, output_data_ptr);
+  if (simd_support & JSIMD_LASX)
+    jsimd_h2v1_upsample_lasx(cinfo->max_v_samp_factor, cinfo->output_width,
+                             input_data, output_data_ptr);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_h2v1_upsample_lsx(cinfo->max_v_samp_factor, cinfo->output_width,
+                            input_data, output_data_ptr);
 }
 
 GLOBAL(void)
@@ -424,6 +495,8 @@ jsimd_can_h2v2_fancy_upsample(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -441,6 +514,8 @@ jsimd_can_h2v1_fancy_upsample(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -449,18 +524,28 @@ GLOBAL(void)
 jsimd_h2v2_fancy_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                           JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
-  jsimd_h2v2_fancy_upsample_lasx(cinfo->max_v_samp_factor,
-                                 compptr->downsampled_width, input_data,
-                                 output_data_ptr);
+  if (simd_support & JSIMD_LASX)
+    jsimd_h2v2_fancy_upsample_lasx(cinfo->max_v_samp_factor,
+                                   compptr->downsampled_width, input_data,
+                                   output_data_ptr);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_h2v2_fancy_upsample_lsx(cinfo->max_v_samp_factor,
+                                  compptr->downsampled_width, input_data,
+                                  output_data_ptr);
 }
 
 GLOBAL(void)
 jsimd_h2v1_fancy_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                           JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
-  jsimd_h2v1_fancy_upsample_lasx(cinfo->max_v_samp_factor,
-                                 compptr->downsampled_width, input_data,
-                                 output_data_ptr);
+  if (simd_support & JSIMD_LASX)
+    jsimd_h2v1_fancy_upsample_lasx(cinfo->max_v_samp_factor,
+                                   compptr->downsampled_width, input_data,
+                                   output_data_ptr);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_h2v1_fancy_upsample_lsx(cinfo->max_v_samp_factor,
+                                  compptr->downsampled_width, input_data,
+                                  output_data_ptr);
 }
 
 GLOBAL(int)
@@ -475,6 +560,8 @@ jsimd_can_h2v2_merged_upsample(void)
     return 0;
 
   if (simd_support & JSIMD_LASX)
+    return 1;
+  if (simd_support & JSIMD_LSX)
     return 1;
 
   return 0;
@@ -493,6 +580,8 @@ jsimd_can_h2v1_merged_upsample(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -502,36 +591,47 @@ jsimd_h2v2_merged_upsample(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
                            JDIMENSION in_row_group_ctr, JSAMPARRAY output_buf)
 {
   void (*lasxfct) (JDIMENSION, JSAMPIMAGE, JDIMENSION, JSAMPARRAY);
+  void (*lsxfct) (JDIMENSION, JSAMPIMAGE, JDIMENSION, JSAMPARRAY);
 
   switch (cinfo->out_color_space) {
   case JCS_EXT_RGB:
     lasxfct = jsimd_h2v2_extrgb_merged_upsample_lasx;
+    lsxfct = jsimd_h2v2_extrgb_merged_upsample_lsx;
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     lasxfct = jsimd_h2v2_extrgbx_merged_upsample_lasx;
+    lsxfct = jsimd_h2v2_extrgbx_merged_upsample_lsx;
     break;
   case JCS_EXT_BGR:
     lasxfct = jsimd_h2v2_extbgr_merged_upsample_lasx;
+    lsxfct = jsimd_h2v2_extbgr_merged_upsample_lsx;
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
     lasxfct = jsimd_h2v2_extbgrx_merged_upsample_lasx;
+    lsxfct = jsimd_h2v2_extbgrx_merged_upsample_lsx;
     break;
   case JCS_EXT_XBGR:
   case JCS_EXT_ABGR:
     lasxfct = jsimd_h2v2_extxbgr_merged_upsample_lasx;
+    lsxfct = jsimd_h2v2_extxbgr_merged_upsample_lsx;
     break;
   case JCS_EXT_XRGB:
   case JCS_EXT_ARGB:
     lasxfct = jsimd_h2v2_extxrgb_merged_upsample_lasx;
+    lsxfct = jsimd_h2v2_extxrgb_merged_upsample_lsx;
     break;
   default:
     lasxfct = jsimd_h2v2_merged_upsample_lasx;
+    lsxfct = jsimd_h2v2_merged_upsample_lsx;
     break;
   }
 
-  lasxfct(cinfo->output_width, input_buf, in_row_group_ctr, output_buf);
+  if (simd_support & JSIMD_LASX)
+    lasxfct(cinfo->output_width, input_buf, in_row_group_ctr, output_buf);
+  else if (simd_support & JSIMD_LSX)
+    lsxfct(cinfo->output_width, input_buf, in_row_group_ctr, output_buf);
 }
 
 GLOBAL(void)
@@ -539,36 +639,47 @@ jsimd_h2v1_merged_upsample(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
                            JDIMENSION in_row_group_ctr, JSAMPARRAY output_buf)
 {
   void (*lasxfct) (JDIMENSION, JSAMPIMAGE, JDIMENSION, JSAMPARRAY);
+  void (*lsxfct) (JDIMENSION, JSAMPIMAGE, JDIMENSION, JSAMPARRAY);
 
   switch (cinfo->out_color_space) {
   case JCS_EXT_RGB:
     lasxfct = jsimd_h2v1_extrgb_merged_upsample_lasx;
+    lsxfct = jsimd_h2v1_extrgb_merged_upsample_lsx;
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     lasxfct = jsimd_h2v1_extrgbx_merged_upsample_lasx;
+    lsxfct = jsimd_h2v1_extrgbx_merged_upsample_lsx;
     break;
   case JCS_EXT_BGR:
     lasxfct = jsimd_h2v1_extbgr_merged_upsample_lasx;
+    lsxfct = jsimd_h2v1_extbgr_merged_upsample_lsx;
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
     lasxfct = jsimd_h2v1_extbgrx_merged_upsample_lasx;
+    lsxfct = jsimd_h2v1_extbgrx_merged_upsample_lsx;
     break;
   case JCS_EXT_XBGR:
   case JCS_EXT_ABGR:
     lasxfct = jsimd_h2v1_extxbgr_merged_upsample_lasx;
+    lsxfct = jsimd_h2v1_extxbgr_merged_upsample_lsx;
     break;
   case JCS_EXT_XRGB:
   case JCS_EXT_ARGB:
     lasxfct = jsimd_h2v1_extxrgb_merged_upsample_lasx;
+    lsxfct = jsimd_h2v1_extxrgb_merged_upsample_lsx;
     break;
   default:
     lasxfct = jsimd_h2v1_merged_upsample_lasx;
+    lsxfct = jsimd_h2v1_merged_upsample_lsx;
     break;
   }
 
-  lasxfct(cinfo->output_width, input_buf, in_row_group_ctr, output_buf);
+  if (simd_support & JSIMD_LASX)
+    lasxfct(cinfo->output_width, input_buf, in_row_group_ctr, output_buf);
+  else if (simd_support & JSIMD_LSX)
+    lsxfct(cinfo->output_width, input_buf, in_row_group_ctr, output_buf);
 }
 
 GLOBAL(int)
@@ -588,6 +699,8 @@ jsimd_can_convsamp(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -602,7 +715,10 @@ GLOBAL(void)
 jsimd_convsamp(JSAMPARRAY sample_data, JDIMENSION start_col,
                DCTELEM *workspace)
 {
-  jsimd_convsamp_lasx(sample_data, start_col, workspace);
+  if (simd_support & JSIMD_LASX)
+    jsimd_convsamp_lasx(sample_data, start_col, workspace);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_convsamp_lsx(sample_data, start_col, workspace);
 }
 
 GLOBAL(void)
@@ -624,6 +740,8 @@ jsimd_can_fdct_islow(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -641,6 +759,8 @@ jsimd_can_fdct_ifast(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -654,13 +774,19 @@ jsimd_can_fdct_float(void)
 GLOBAL(void)
 jsimd_fdct_islow(DCTELEM *data)
 {
-  jsimd_fdct_islow_lasx(data);
+  if (simd_support & JSIMD_LASX)
+    jsimd_fdct_islow_lasx(data);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_fdct_islow_lsx(data);
 }
 
 GLOBAL(void)
 jsimd_fdct_ifast(DCTELEM *data)
 {
-  jsimd_fdct_ifast_lasx(data);
+  if (simd_support & JSIMD_LASX)
+    jsimd_fdct_ifast_lasx(data);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_fdct_ifast_lsx(data);
 }
 
 GLOBAL(void)
@@ -683,6 +809,8 @@ jsimd_can_quantize(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -696,7 +824,10 @@ jsimd_can_quantize_float(void)
 GLOBAL(void)
 jsimd_quantize(JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace)
 {
-  jsimd_quantize_lasx(coef_block, divisors, workspace);
+  if (simd_support & JSIMD_LASX)
+    jsimd_quantize_lasx(coef_block, divisors, workspace);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_quantize_lsx(coef_block, divisors, workspace);
 }
 
 GLOBAL(void)
@@ -724,6 +855,8 @@ jsimd_can_idct_2x2(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -747,6 +880,8 @@ jsimd_can_idct_4x4(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -768,7 +903,10 @@ jsimd_idct_2x2(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                JCOEFPTR coef_block, JSAMPARRAY output_buf,
                JDIMENSION output_col)
 {
-  jsimd_idct_2x2_lasx(compptr->dct_table, coef_block, output_buf, output_col);
+  if (simd_support & JSIMD_LASX)
+    jsimd_idct_2x2_lasx(compptr->dct_table, coef_block, output_buf, output_col);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_idct_2x2_lsx(compptr->dct_table, coef_block, output_buf, output_col);
 }
 
 GLOBAL(void)
@@ -776,7 +914,10 @@ jsimd_idct_4x4(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                JCOEFPTR coef_block, JSAMPARRAY output_buf,
                JDIMENSION output_col)
 {
-  jsimd_idct_4x4_lasx(compptr->dct_table, coef_block, output_buf, output_col);
+  if (simd_support & JSIMD_LASX)
+    jsimd_idct_4x4_lasx(compptr->dct_table, coef_block, output_buf, output_col);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_idct_4x4_lsx(compptr->dct_table, coef_block, output_buf, output_col);
 }
 
 GLOBAL(void)
@@ -812,6 +953,8 @@ jsimd_can_idct_islow(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -836,6 +979,8 @@ jsimd_can_idct_ifast(void)
     return 0;
 
   if (simd_support & JSIMD_LASX)
+    return 1;
+  if (simd_support & JSIMD_LSX)
     return 1;
 
   return 0;
@@ -863,9 +1008,10 @@ jsimd_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
     output_buf[7] + output_col,
   };
 
-  if (simd_support & JSIMD_LASX) {
+  if (simd_support & JSIMD_LASX)
     jsimd_idct_islow_lasx(cinfo, compptr, coef_block, output, output_col);
-  }
+  else if (simd_support & JSIMD_LSX)
+    jsimd_idct_islow_lsx(cinfo, compptr, coef_block, output, output_col);
 }
 
 GLOBAL(void)
@@ -873,8 +1019,12 @@ jsimd_idct_ifast(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
-  jsimd_idct_ifast_lasx(compptr->dct_table, coef_block, output_buf,
-                        output_col);
+  if (simd_support & JSIMD_LASX)
+    jsimd_idct_ifast_lasx(compptr->dct_table, coef_block, output_buf,
+                          output_col);
+  else if (simd_support & JSIMD_LSX)
+    jsimd_idct_ifast_lsx(compptr->dct_table, coef_block, output_buf,
+                         output_col);
 }
 
 GLOBAL(void)
@@ -896,6 +1046,8 @@ jsimd_can_huff_encode_one_block(void)
 
   if (simd_support & JSIMD_LASX)
     return 1;
+  if (simd_support & JSIMD_LSX)
+    return 1;
 
   return 0;
 }
@@ -905,8 +1057,14 @@ jsimd_huff_encode_one_block(void *state, JOCTET *buffer, JCOEFPTR block,
                             int last_dc_val, c_derived_tbl *dctbl,
                             c_derived_tbl *actbl)
 {
-  return jsimd_huff_encode_one_block_lasx(state, buffer, block, last_dc_val,
-                                          dctbl, actbl);;
+  if (simd_support & JSIMD_LASX)
+    return jsimd_huff_encode_one_block_lasx(state, buffer, block, last_dc_val,
+                                            dctbl, actbl);
+  else if (simd_support & JSIMD_LSX)
+    return jsimd_huff_encode_one_block_lsx(state, buffer, block, last_dc_val,
+                                           dctbl, actbl);
+  else
+    return NULL;
 }
 
 GLOBAL(int)

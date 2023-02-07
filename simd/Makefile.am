@@ -142,6 +142,27 @@ if SIMD_LOONGARCH_64
 
 libsimd_la_LIBADD =
 
+if SIMD_LOONGARCH_LSX
+
+noinst_LTLIBRARIES += libsimd_lsx.la
+
+libsimd_lsx_la_SOURCES = jdcolor-lsx.c jidctint-lsx.c jdsample-lsx.c \
+                         jccolor-lsx.c jcgray-lsx.c jcsample-lsx.c   \
+                         jdmerge-lsx.c jfdctfst-lsx.c jfdctint-lsx.c \
+                         jquanti-lsx.c jidctred-lsx.c jidctfst-lsx.c \
+                         jchuff-lsx.c
+
+jdcolor-lsx.lo: jdcolext-lsx.c
+jccolor-lsx.lo: jccolext-lsx.c
+jcgray-lsx.lo:  jcgrayext-lsx.c
+jdmerge-lsx.lo: jdmrgext-lsx.c
+
+libsimd_lsx_la_CFLAGS = -mlsx
+
+libsimd_la_LIBADD += libsimd_lsx.la
+
+endif
+
 if SIMD_LOONGARCH_LASX
 
 noinst_LTLIBRARIES += libsimd_lasx.la
