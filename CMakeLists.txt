@@ -1093,7 +1093,7 @@ if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
   elseif(CPU_TYPE STREQUAL "x86_64")
     set(DEFAULT_FLOATTEST8 no-fp-contract)
   endif()
-elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64")
+elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "loongarch64")
   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     if(CMAKE_C_COMPILER_ID MATCHES "AppleClang")
       # Xcode 14.3 and later
