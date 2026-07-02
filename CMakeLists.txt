@@ -440,6 +440,14 @@ set(TURBOJPEG_SO_AGE 5)
 set(TURBOJPEG_SO_VERSION 0.${TURBOJPEG_SO_AGE}.0)
 
 
+# LoongArch64 SIMDE
+if(CPU_TYPE STREQUAL "loongarch64")
+  set(WITH_SIMDE TRUE)
+  include_directories(
+    SYSTEM ${CMAKE_SOURCE_DIR}/extlib/simde
+  )
+endif()
+
 ###############################################################################
 # COMPILER SETTINGS
 ###############################################################################
