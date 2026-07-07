@@ -24,10 +24,10 @@
 
 #define JPEG_INTERNALS
 #include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
+
+#include "../jsimdint.h"
 #include "../../src/jdct.h"
-#include "../../src/jsimddct.h"
+#include "../jsimddct.h"
 #include "jmacros_lsx.h"
 
 #define DCTSIZE     8
@@ -68,11 +68,10 @@
 }
 
 GLOBAL(void)
-jsimd_idct_islow_lsx(j_decompress_ptr cinfo, jpeg_component_info *compptr,
-                     JCOEFPTR coef_block, JSAMPARRAY output_buf,
-                     JDIMENSION output_col)
+jsimd_idct_islow_lsx(void *dct_table, JCOEFPTR coef_block,
+                     JSAMPARRAY output_buf, JDIMENSION output_col)
 {
-  JCOEFPTR quantptr = compptr->dct_table;
+  JCOEFPTR quantptr = dct_table;
   __m128i coef0, coef1, coef2, coef3, coef4, coef5, coef6, coef7;
   __m128i tmp0, tmp1, tmp2;
 
@@ -402,12 +401,12 @@ jsimd_idct_islow_lsx(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   LSX_TRANSPOSE8x8_B(res0, res1, res2, res3, res4, res5, res6, res7,
                      res0, res1, res2, res3, res4, res5, res6, res7);
 
-  __lsx_vstelm_d(res0, output_buf[0], 0, 0);
-  __lsx_vstelm_d(res1, output_buf[1], 0, 0);
-  __lsx_vstelm_d(res2, output_buf[2], 0, 0);
-  __lsx_vstelm_d(res3, output_buf[3], 0, 0);
-  __lsx_vstelm_d(res4, output_buf[4], 0, 0);
-  __lsx_vstelm_d(res5, output_buf[5], 0, 0);
-  __lsx_vstelm_d(res6, output_buf[6], 0, 0);
-  __lsx_vstelm_d(res7, output_buf[7], 0, 0);
+  __lsx_vstelm_d(res0, output_buf[0] + output_col, 0, 0);
+  __lsx_vstelm_d(res1, output_buf[1] + output_col, 0, 0);
+  __lsx_vstelm_d(res2, output_buf[2] + output_col, 0, 0);
+  __lsx_vstelm_d(res3, output_buf[3] + output_col, 0, 0);
+  __lsx_vstelm_d(res4, output_buf[4] + output_col, 0, 0);
+  __lsx_vstelm_d(res5, output_buf[5] + output_col, 0, 0);
+  __lsx_vstelm_d(res6, output_buf[6] + output_col, 0, 0);
+  __lsx_vstelm_d(res7, output_buf[7] + output_col, 0, 0);
 }

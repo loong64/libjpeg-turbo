@@ -22,8 +22,10 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+#define JPEG_INTERNALS
 #include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
+
+#include "../jsimdint.h"
 #include "jcsample.h"
 #include "jmacros_lsx.h"
 
