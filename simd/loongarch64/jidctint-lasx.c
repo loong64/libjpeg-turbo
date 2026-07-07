@@ -24,10 +24,10 @@
 
 #define JPEG_INTERNALS
 #include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
+
+#include "../jsimdint.h"
 #include "../../src/jdct.h"
-#include "../../src/jsimddct.h"
+#include "../jsimddct.h"
 #include "jmacros_lasx.h"
 
 #define DCTSIZE     8
@@ -71,11 +71,10 @@
 }
 
 GLOBAL(void)
-jsimd_idct_islow_lasx(j_decompress_ptr cinfo, jpeg_component_info *compptr,
-                      JCOEFPTR coef_block, JSAMPARRAY output_buf,
-                      JDIMENSION output_col)
+jsimd_idct_islow_lasx(void *dct_table, JCOEFPTR coef_block,
+                      JSAMPARRAY output_buf, JDIMENSION output_col)
 {
-  JCOEFPTR quantptr = compptr->dct_table;
+  JCOEFPTR quantptr = dct_table;
   __m256i coef01, coef23, coef45, coef67;
   __m256i quant01, quant23, quant45, quant67;
   __m256i zero = __lasx_xvldi(0);
@@ -298,12 +297,12 @@ jsimd_idct_islow_lasx(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   LASX_TRANSPOSE8x8_B(dcval0, dcval1, dcval2, dcval3, dcval4, dcval5, dcval6, dcval7,
                       dcval0, dcval1, dcval2, dcval3, dcval4, dcval5, dcval6, dcval7);
 
-  __lasx_xvstelm_d(dcval0, output_buf[0], 0, 0);
-  __lasx_xvstelm_d(dcval1, output_buf[1], 0, 0);
-  __lasx_xvstelm_d(dcval2, output_buf[2], 0, 0);
-  __lasx_xvstelm_d(dcval3, output_buf[3], 0, 0);
-  __lasx_xvstelm_d(dcval4, output_buf[4], 0, 0);
-  __lasx_xvstelm_d(dcval5, output_buf[5], 0, 0);
-  __lasx_xvstelm_d(dcval6, output_buf[6], 0, 0);
-  __lasx_xvstelm_d(dcval7, output_buf[7], 0, 0);
+  __lasx_xvstelm_d(dcval0, output_buf[0] + output_col, 0, 0);
+  __lasx_xvstelm_d(dcval1, output_buf[1] + output_col, 0, 0);
+  __lasx_xvstelm_d(dcval2, output_buf[2] + output_col, 0, 0);
+  __lasx_xvstelm_d(dcval3, output_buf[3] + output_col, 0, 0);
+  __lasx_xvstelm_d(dcval4, output_buf[4] + output_col, 0, 0);
+  __lasx_xvstelm_d(dcval5, output_buf[5] + output_col, 0, 0);
+  __lasx_xvstelm_d(dcval6, output_buf[6] + output_col, 0, 0);
+  __lasx_xvstelm_d(dcval7, output_buf[7] + output_col, 0, 0);
 }

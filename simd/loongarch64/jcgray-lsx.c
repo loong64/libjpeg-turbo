@@ -24,8 +24,8 @@
 
 #define JPEG_INTERNALS
 #include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
+
+#include "../jsimdint.h"
 #include "jmacros_lsx.h"
 
 /* Y  =  0.29900 * R + 0.58700 * G + 0.11400 * B */

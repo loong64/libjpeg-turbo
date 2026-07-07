@@ -24,10 +24,10 @@
 
 #define JPEG_INTERNALS
 #include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
+
+#include "../jsimdint.h"
 #include "../../src/jdct.h"
-#include "../../src/jsimddct.h"
+#include "../jsimddct.h"
 #include "jmacros_lsx.h"
 
 #define DCTSIZE 8

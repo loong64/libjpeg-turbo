@@ -24,8 +24,8 @@
 
 #define JPEG_INTERNALS
 #include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
+
+#include "../jsimdint.h"
 #include "jconfigint.h"
 #include "jmacros_lasx.h"
 
@@ -34,8 +34,6 @@
 #define FIX_71414   46802
 #define FIX_177200  116130
 #define FIX_28586   18734
-
-#define DESCALE(x,n)  (((x)+(1<<((n)-1)))>>(n))
 
 static INLINE unsigned char clip_pixel(int val)
 {

@@ -560,6 +560,8 @@ endif()
 
 elseif(CPU_TYPE STREQUAL "loongarch64")
 
+set(SIMD_ARCHITECTURE LOONGARCH64 PARENT_SCOPE)
+
 set(CMAKE_REQUIRED_FLAGS -mlsx)
 check_c_source_compiles("
   #include <lsxintrin.h>
@@ -625,7 +627,7 @@ endforeach()
 set_source_files_properties(${SIMD_SOURCES} PROPERTIES
   COMPILE_FLAGS -mlasx)
 
-add_library(simd OBJECT ${SIMD_SOURCES} ${CPU_TYPE}/jsimd.c)
+add_library(simd OBJECT ${SIMD_SOURCES} jsimd.c loongarch64/jsimdcpu.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
