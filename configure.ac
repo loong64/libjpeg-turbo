@@ -651,6 +651,10 @@ case "$host_cpu" in
     RPMARCH=i386
     DEBARCH=i386
     ;;
+  loongarch64)
+    RPMARCH=loongarch64
+    DEBARCH=loong64
+    ;;
   *)
     RPMARCH=`uname -m`
     DEBARCH=$RPMARCH
